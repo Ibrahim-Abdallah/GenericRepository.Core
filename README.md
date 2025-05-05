@@ -15,7 +15,7 @@ A lightweight and reusable **Generic Repository** implementation built with **.N
 
 ## 📦 Installation
 
-1. Clone or add this project as a Git submodule or NuGet package (if published).
+1. Clone or add this project as a Git submodule.
 2. Reference it from your main solution.
 
 ---
