@@ -11,10 +11,14 @@
         void Update(T entity);
         void Delete(T entity);
 
-        Task<PagedResult<T>> GetAllPagedAsync(int page, int pageSize, CancellationToken cancellationToken = default);
+        Task<PagedResult<T>> GetAllPagedAsync(int page = 1, int pageSize = 10, CancellationToken cancellationToken = default);
 
         Task SaveChangesAsync(CancellationToken cancellationToken = default);
 
         Task<bool> IsUniqueAsync(Expression<Func<T, bool>> predicate, CancellationToken cancellationToken = default);
+
+        Task BulkInsertAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default);
+        Task BulkUpdateAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default);
+        Task BulkDeleteAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default);
     }
 }

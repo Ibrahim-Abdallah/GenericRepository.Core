@@ -1,9 +1,10 @@
 ﻿namespace GenericRepository.Core.Implementations
 {
-    public class GenericRepository<T>(DbContext context) : IRepository<T> where T : class
+    public class GenericRepository<T>(DbContext context, IBulkConfigProvider? bulkConfigProvider = null) : IRepository<T> where T : class
     {
         protected DbContext _context { get; set; } = context ?? throw new ArgumentNullException(nameof(context));
         private readonly DbSet<T> _dbSet = context.Set<T>();
+        private readonly IBulkConfigProvider? _bulkConfigProvider = bulkConfigProvider;
 
         public IQueryable<T> GetAll(bool asNoTracking = true)
             => asNoTracking ? _dbSet.AsNoTracking() : _dbSet;
@@ -35,7 +36,7 @@
             _dbSet.Remove(entity);
         }
 
-        public async Task<PagedResult<T>> GetAllPagedAsync(int page, int pageSize, CancellationToken cancellationToken = default)
+        public async Task<PagedResult<T>> GetAllPagedAsync(int page = 1, int pageSize = 10, CancellationToken cancellationToken = default)
         {
             // Guard clauses
             if (page <= 0) throw new ArgumentOutOfRangeException(nameof(page), "Page must be greater than 0.");
@@ -75,6 +76,39 @@
         public async Task<bool> IsUniqueAsync(Expression<Func<T, bool>> predicate, CancellationToken cancellationToken = default)
         {
             return !await _dbSet.AnyAsync(predicate, cancellationToken);
+        }
+
+        public async Task BulkInsertAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default)
+        {
+            if (_bulkConfigProvider is null)
+                throw new InvalidOperationException("Bulk operations are not configured for this repository.");
+
+            ArgumentNullException.ThrowIfNull(entities);
+
+            var config = _bulkConfigProvider.GetConfig();
+            await _context.BulkInsertAsync(entities.ToList(), config, cancellationToken: cancellationToken);
+        }
+
+        public async Task BulkUpdateAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default)
+        {
+            if (_bulkConfigProvider is null)
+                throw new InvalidOperationException("Bulk operations are not configured for this repository.");
+
+            ArgumentNullException.ThrowIfNull(entities);
+
+            var config = _bulkConfigProvider.GetConfig();
+            await _context.BulkUpdateAsync(entities.ToList(), config, cancellationToken: cancellationToken);
+        }
+
+        public async Task BulkDeleteAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default)
+        {
+            if (_bulkConfigProvider is null)
+                throw new InvalidOperationException("Bulk operations are not configured for this repository.");
+
+            ArgumentNullException.ThrowIfNull(entities);
+
+            var config = _bulkConfigProvider.GetConfig();
+            await _context.BulkDeleteAsync(entities.ToList(), config, cancellationToken: cancellationToken);
         }
     }
 }
